@@ -97,7 +97,9 @@ class CPU
          ****/
         //void STOP();
         void LD(unsigned char &regTarget, unsigned char data);
+        void LDH(unsigned char offset, bool targetA=false);
         bool JR(bool conditional=false, unsigned char condition=0, bool conditionReq=false);
+        bool JP(unsigned char lo, unsigned char hi, bool conditional=false, unsigned char condition=0, bool conditionReq=false);
         void ADD(unsigned char &regTarget, unsigned char add, bool withCarry=false, bool setFlag=true, bool setZ=true);
         void SUB(unsigned char &regTarget, unsigned char sub, bool withCarry=false, bool setFlag=true);
         void AND(unsigned char &regTarget, unsigned char data);
@@ -114,8 +116,8 @@ class CPU
         void DEC_16(unsigned char &hi, unsigned char &lo);
         void DAA();
         void SCF();
-        // Merge with call?
-        void RST();
+        // Merge with call? (Better not to)
+        void RST(unsigned short vec);
         void PUSH(unsigned char regHi, unsigned char regLo);
         void POP(bool AF=false, unsigned char &regHi, unsigned char &regLo);
         void DI();
@@ -125,7 +127,7 @@ class CPU
         // Merged in SUB by withCarry=true void SBC();
         // Merged in ADD by withCarry=true void ADC();
         // Implement Inside Main
-        void CALL();
+        bool CALL(bool conditional=false, unsigned char condition=0, bool conditionReq=false);
         void EI();
         // Merged in RLA by withCarry=false void RLC();
         // Merged in RL void RL();
@@ -137,6 +139,7 @@ class CPU
         void BIT(unsigned char &regTarget, unsigned char bit);
         // Merged in RRA void RR();
         // Merged in RRC void RRC();
+        void ADDSP();
 
         unsigned char GET_IMMEDIATE();
 

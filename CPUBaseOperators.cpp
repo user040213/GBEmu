@@ -5,6 +5,17 @@ void CPU::LD(unsigned char &regTarget, unsigned char data)
 {
     regTarget = data;
 }
+void CPU::LDH(unsigned char offset, bool targetA)
+{
+    if(targetA)
+    {
+        LD(a, rMemory(0xFF00 + offset));
+    }
+    else
+    {
+        wMemory(0xFF00 + offset, a);
+    }
+}
 bool CPU::JR(bool conditional, unsigned char condition, bool conditionReq)
 {
     // increment program counter by offset
@@ -25,6 +36,25 @@ bool CPU::JR(bool conditional, unsigned char condition, bool conditionReq)
     }
     
 
+}
+
+// Little endian so lo byte is first in memory
+bool CPU::JP(unsigned char lo, unsigned char hi, bool conditional=false, unsigned char condition=0, bool conditionReq=false)
+{
+    if(conditional)
+    {
+        if(get_bit(f, condition) == conditionReq)
+        {
+            pc = get_16bit(hi,lo);
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        pc = get_16bit(hi, lo);
+        return true;
+    }
 }
 void CPU::ADD(unsigned char &regTarget, unsigned char data, bool withCarry, bool setFlag, bool setZ)
 {
@@ -62,7 +92,7 @@ void CPU::ADD(unsigned char &regTarget, unsigned char data, bool withCarry, bool
             f |= (0b1 << F_H);
         }
         // C flag
-        if (((unsigned short)(initial + data)) > 0b11111111)
+        if ((((unsigned short)(initial) + data)) > 0b11111111)
         {
             f |= (0b1 << F_C);
         }
@@ -415,9 +445,10 @@ void CPU::SCF()
     f |= 0b1 << F_C;
 }
 
-void CPU::RST()
+void CPU::RST(unsigned short vec)
 {
-
+    PUSH(get_8bit(pc, true), get_8bit(pc));
+    pc = vec;
 }
 
 void CPU::PUSH(unsigned char regHi, unsigned char regLo)
@@ -461,7 +492,7 @@ void CPU::POP(bool AF, unsigned char &regHi, unsigned char &regLo)
 
 void CPU::DI()
 {
-    IME = 0;
+    prepareDisable = 1;
 }
 
 void CPU::CCF()
@@ -513,9 +544,31 @@ void CPU::CP(unsigned char regTarget, unsigned char data)
     }
 }
 
+bool CPU::CALL(bool conditional=false, unsigned char condition=0, bool conditionReq=false)
+{
+    unsigned char lo{GET_IMMEDIATE()};
+    unsigned char hi{GET_IMMEDIATE()};
+    if(conditional)
+    {
+        if(get_bit(f, condition) == conditionReq)
+        {
+            PUSH(get_8bit(pc, true), get_8bit(pc));
+            pc = get_16bit(hi, lo);
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        PUSH(get_8bit(pc, true), get_8bit(pc));
+        pc = get_16bit(hi, lo);
+        return true;
+    }
+}
+
 void CPU::EI()
 {
-    IME = 1;
+    prepareEnable = 1;
 }
 
 void CPU::SLA(unsigned char &regTarget)
@@ -617,6 +670,43 @@ void CPU::BIT(unsigned char &regTarget, unsigned char bit)
     //H: 1
     f |= 0b1 << F_H;
     //C: Unaffected
+}
+
+void CPU::ADDSP()
+{
+    signed char data{GET_IMMEDIATE()};
+    unsigned short sp_temp{get_16bit(s,p)};
+
+    sp_temp += data;
+    RES(f, F_Z);
+    RES(f, F_N);
+    RES(f, F_H);
+    RES(f, F_C);
+    if(data < 0)
+    {
+        if (((char)(p & 0b1111) + (data & 0b1111)) < 0)
+        {
+            f |= (0b1 << F_H);
+        }
+        if (data > p)
+        {
+            f |= (0b1 << F_C);
+        }
+    }
+    else
+    {
+        if(((p & 0b1111) + (data & 0b1111)) > 0b1111)
+        {
+            f |= (0b1 << F_H);
+        }
+        if ((((unsigned short)(p) + data)) > 0b11111111)
+        {
+            f |= (0b1 << F_C);
+        }
+    }
+
+    s = get_8bit(sp_temp, true);
+    p = get_8bit(sp_temp);
 }
 
 unsigned char CPU::GET_IMMEDIATE()

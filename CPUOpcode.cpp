@@ -622,71 +622,269 @@ int CPU::performOpCode(unsigned char op)
             CP(a,a);
             return 4;
         case 0xc0:
-            
+            if(RET(true, F_Z, false))
+            {
+                return 20;
+            }
+            else
+            {
+                return 8;
+            }
         case 0xc1:
+            POP(false, b, c);
+            return 12;
         case 0xc2:
+            if(JP(GET_IMMEDIATE(), GET_IMMEDIATE(), true, F_Z, false))
+            {
+                return 16;
+            }
+            else
+            {
+                return 12;
+            }
         case 0xc3:
+            JP(GET_IMMEDIATE(), GET_IMMEDIATE());
+            return 16;
         case 0xc4:
+            if(CALL(true, F_Z, false))
+            {
+                return 24;
+            }
+            else
+            {
+                return 12;
+            }
         case 0xc5:
+            PUSH(b, c);
+            return 16;
         case 0xc6:
+            ADD(a, GET_IMMEDIATE());
+            return 8;
         case 0xc7:
+            RST(0x00);
+            return 16;
         case 0xc8:
+            if(RET(true, F_Z, true))
+            {
+                return 20;
+            }
+            else{
+                return 8;
+            }
         case 0xc9:
+            RET();
+            return 16;
         case 0xca:
+            if(JP(GET_IMMEDIATE(), GET_IMMEDIATE(), true, F_Z, true))
+            {
+                return 16;
+            }
+            else{
+                return 12;
+            }
         case 0xcb:
             return performCBOpCode();
         case 0xcc:
+            if(CALL(true, F_Z, true))
+            {
+                return 24;
+            }
+            else{
+                return 12;
+            }
         case 0xcd:
+            CALL();
+            return 24;
         case 0xce:
+            ADD(a, GET_IMMEDIATE(), true);
+            return 8;
         case 0xcf:
+            RST(0x08);
+            return 16;
         case 0xd0:
+            if(RET(true, F_C, false))
+            {
+                return 20;
+            }
+            return 8;
+
         case 0xd1:
+            POP(false, d, e);
+            return 12;
         case 0xd2:
+            if(JP(GET_IMMEDIATE(), GET_IMMEDIATE(), true, F_C, false))
+            {
+                return 16;
+            }
+            else{
+                return 12;
+            }
         case 0xd3:
+            // NO instr
+            return;
         case 0xd4:
+            if(CALL(true, F_C, false))
+            {
+                return 24;
+            }
+            else{return 12;}
         case 0xd5:
+            PUSH(d, e);
+            return 16;
         case 0xd6:
+            SUB(a, GET_IMMEDIATE());
+            return 8;
         case 0xd7:
+            RST(0x10);
+            return 16;
         case 0xd8:
+            if(RET(true, F_C, true))
+            {
+                return 20;
+            }
+            else
+            {
+                return 8;
+            }
         case 0xd9:
+            RET();
+            EI();
+            return 16;
         case 0xda:
+            if(JP(GET_IMMEDIATE(), GET_IMMEDIATE(), true, F_C, true))
+            {
+                return 16;
+            }
+            else{
+                return 12;
+            }
         case 0xdb:
+            // No instr
+            return;
         case 0xdc:
+            if(CALL(true, F_C, true))
+            {
+                return 24;
+            }
+            else{
+                return 12;
+            }
         case 0xdd:
+            // No instr
+            return;
         case 0xde:
+            SUB(a, GET_IMMEDIATE(), true);
+            return 8;
         case 0xdf:
+            RST(0x18);
+            return 16;
         case 0xe0:
+            LDH(GET_IMMEDIATE());
+            return 12;
         case 0xe1:
+            POP(false, h, l);
+            return 12;
         case 0xe2:
+            LDH(c, false);
+            return 8;
         case 0xe3:
+            // no op
+            return;
         case 0xe4:
+            // no op
+            return;
         case 0xe5:
+            PUSH(h, l);
+            return 16;
         case 0xe6:
+            AND(a, GET_IMMEDIATE());
+            return 8;
         case 0xe7:
+            RST(0x20);
+            return 16;
         case 0xe8:
+            ADDSP();
+            return 16;
         case 0xe9:
+            JP(l, h);
+            return 4;
         case 0xea:
+            unsigned char lo{GET_IMMEDIATE()};
+            unsigned char hi{GET_IMMEDIATE()};
+
+            wMemory(get_16bit(hi, lo), a);
+            return 16;
         case 0xeb:
+            // No instr
+            return;
         case 0xec:
+            // No instr
+            return;
         case 0xed:
+            // No instr
+            return;
         case 0xee:
+            XOR(a, GET_IMMEDIATE());
+            return 8;
         case 0xef:
+            RST(0x28);
+            return 16;
         case 0xf0:
+            LDH(GET_IMMEDIATE(), true);
+            return 12;
         case 0xf1:
+            POP(true, a, f);
+            return 12;
         case 0xf2:
+            LDH(c, true);
+            return 8;
         case 0xf3:
+            DI();
+            return 4;
         case 0xf4:
+            // no instr
+            return;
         case 0xf5:
+            PUSH(a,f);
+            return 16;
         case 0xf6:
+            OR(a, GET_IMMEDIATE());
+            return 8;
         case 0xf7:
+            RST(0x30);
+            return 16;
         case 0xf8:
+            unsigned short sp_temp{get_16bit(s,p)};
+            ADDSP();
+            LD(h, s);
+            LD(l, p);
+            s = get_8bit(sp_temp, true);
+            p = get_8bit(sp_temp);
+            return 12;
         case 0xf9:
+            LD(s, h);
+            LD(p, l);
+            return 8;
         case 0xfa:
+            unsigned char lo{GET_IMMEDIATE()};
+            unsigned char hi{GET_IMMEDIATE()};
+            LD(a, rMemory(get_16bit(hi,lo)));
+            return 16;
         case 0xfb:
+            EI();
+            return 4;
         case 0xfc:
+            // no instr
+            return;
         case 0xfd:
+            // no instr
+            return;
         case 0xfe:
+            CP(a, GET_IMMEDIATE());
+            return 8;
         case 0xff:
+            RST(0x38);
+            return 16;
 
         
 
@@ -696,25 +894,59 @@ int CPU::performOpCode(unsigned char op)
 int CPU::performCBOpCode()
 {
     // opcodes stored in program counter
-    unsigned char op = pc;
+    unsigned char op = rMemory(pc);
     pc++;
     switch(op)
     {
         case 0x00:
+            RLA(b);
+            return 8;
         case 0x01:
+            RLA(c);
+            return 8;
         case 0x02:
+            RLA(d);
+            return 8;
         case 0x03:
+            RLA(e);
+            return 8;
         case 0x04:
+            RLA(h);
+            return 8;
         case 0x05:
+            RLA(l);
+            return 8;
         case 0x06:
+            unsigned char temp{rMemory(get_16bit(h,l))};
+            RLA(temp);
+            wMemory(get_16bit(h,l), temp);
+            return 16;
         case 0x07:
+            RLA(a);
+            return 8;
         case 0x08:
+            RRA(b);
+            return 8;
         case 0x09:
+            RRA(c);
+            return 8;
         case 0x0a:
+            RRA(d);
+            return 8;
         case 0x0b:
+            RRA(e);
+            return 8;
         case 0x0c:
+            RRA(h);
+            return 8;
         case 0x0d:
+            RRA(l);
+            return 8;
         case 0x0e:
+            unsigned char temp{rMemory(get_16bit(h,l))};
+            RRA(temp);
+            wMemory(get_16bit(h,l), temp);
+            return 16;
         case 0x0f:
         case 0x10:
         case 0x11:
