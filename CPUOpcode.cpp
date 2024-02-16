@@ -240,134 +240,389 @@ int CPU::performOpCode(unsigned char op)
             CCF();
             return 4;
         case 0x40:
+            LD(b,b);
+            return 4;
         case 0x41:
+            LD(b,c);
+            return 4;
         case 0x42:
+            LD(b,d);
+            return 4;
         case 0x43:
+            LD(b,e);
+            return 4;
         case 0x44:
+            LD(b, h);
+            return 4;
         case 0x45:
+            LD(b,l);
+            return 4;
         case 0x46:
+            LD(b, rMemory(get_16bit(h,l)));
+            return 8;
         case 0x47:
+            LD(b, a);
+            return 4;
         case 0x48:
+            LD(c,b);
+            return 4;
         case 0x49:
+            LD(c,c);
+            return 4;
         case 0x4a:
+            LD(c,d);
+            return 4;
         case 0x4b:
+            LD(c,e);
+            return 4;
         case 0x4c:
+            LD(c,h);
+            return 4;
         case 0x4d:
+            LD(c,l);
+            return 4;
         case 0x4e:
+            LD(c, rMemory(get_16bit(h,l)));
+            return 8;
         case 0x4f:
+            LD(c, a);
+            return 4;
         case 0x50:
+            LD(d, b);
+            return 4;
         case 0x51:
+            LD(d, c);
+            return 4;
         case 0x52:
+            LD(d, d);
+            return 4;
         case 0x53:
+            LD(d, e);
+            return 4;
         case 0x54:
+            LD(d, h);
+            return 4;
         case 0x55:
+            LD(d, l);
+            return 4;
         case 0x56:
+            LD(d, rMemory(get_16bit(h,l)));
+            return 8;
         case 0x57:
+            LD(d, a);
+            return 4;
         case 0x58:
+            LD(e, b);
+            return 4;
         case 0x59:
+            LD(e, c);
+            return 4;
         case 0x5a:
+            LD(e, d);
+            return 4;
         case 0x5b:
+            LD(e, e);
+            return 4;
         case 0x5c:
+            LD(e, h);
+            return 4;
         case 0x5d:
+            LD(e, l);
+            return 4;
         case 0x5e:
+            LD(e, rMemory(get_16bit(h, l)));
+            return 8;
         case 0x5f:
+            LD(e, a);
+            return 4;
         case 0x60:
+            LD(h, b);
+            return 4;
         case 0x61:
+            LD(h, c);
+            return 4;
         case 0x62:
+            LD(h, d);
+            return 4;
         case 0x63:
+            LD(h, e);
+            return 4;
         case 0x64:
+            LD(h, h);
+            return 4;
         case 0x65:
+            LD(h, l);
+            return 4;
         case 0x66:
+            LD(h, rMemory(get_16bit(h, l)));
+            return 8;
         case 0x67:
+            LD(h, a);
+            return 4;
         case 0x68:
+            LD(l, b);
+            return 4;
         case 0x69:
+            LD(l, c);
+            return 4;
         case 0x6a:
+            LD(l, d);
+            return 4;
         case 0x6b:
+            LD(l, e);
+            return 4;
         case 0x6c:
+            LD(l, h);
+            return 4;
         case 0x6d:
+            LD(l, l);
+            return 4;
         case 0x6e:
+            LD(l, rMemory(get_16bit(h, l)));
+            return 8;
         case 0x6f:
+            LD(l, a);
+            return 4;
         case 0x70:
+            wMemory(get_16bit(h,l), b);
+            return 8;
         case 0x71:
+            wMemory(get_16bit(h,l), c);
+            return 8;
         case 0x72:
+            wMemory(get_16bit(h,l), d);
+            return 8;
         case 0x73:
+            wMemory(get_16bit(h,l), e);
+            return 8;
         case 0x74:
+            wMemory(get_16bit(h,l), h);
+            return 8;
         case 0x75:
-        case 0x76:
+            wMemory(get_16bit(h,l), l);
+            return 8;
+        case 0x76: // HALT UNIMPLEMENTED
         case 0x77:
+            wMemory(get_16bit(h,l), a);
+            return 8;
         case 0x78:
+            LD(a,b);
+            return 4;
         case 0x79:
+            LD(a,c);
+            return 4;
         case 0x7a:
+            LD(a,d);
+            return 4;
         case 0x7b:
+            LD(a,e);
+            return 4;
         case 0x7c:
+            LD(a,h);
+            return 4;
         case 0x7d:
+            LD(a,l);
+            return 4;
         case 0x7e:
+            LD(a, rMemory(get_16bit(h,l)));
+            return 8;
         case 0x7f:
+            LD(a,a);
+            return 4;
         case 0x80:
+            ADD(a, b);
+            return 4;
         case 0x81:
+            ADD(a,c);
+            return 4;
         case 0x82:
+            ADD(a,d);
+            return 4;
         case 0x83:
+            ADD(a,e);
+            return 4;
         case 0x84:
+            ADD(a,h);
+            return 4;
         case 0x85:
+            ADD(a,l);
+            return 4;
         case 0x86:
+            ADD(a,rMemory(get_16bit(h,l)));
+            return 8;
         case 0x87:
+            ADD(a,a);
+            return 4;
         case 0x88:
+            ADD(a, b, true);
+            return 4;
         case 0x89:
+            ADD(a, c, true);
+            return 4;
         case 0x8a:
+            ADD(a, d, true);
+            return 4;
         case 0x8b:
+            ADD(a, e, true);
+            return 4;
         case 0x8c:
+            ADD(a, h, true);
+            return 4;
         case 0x8d:
+            ADD(a, l, true);
+            return 4;
         case 0x8e:
+            ADD(a, rMemory(get_16bit(h,l)), true);
+            return 8;
         case 0x8f:
+            ADD(a, a, true);
+            return 4;
         case 0x90:
+            SUB(a,b);
+            return 4;
         case 0x91:
+            SUB(a,c);
+            return 4;
         case 0x92:
+            SUB(a,d);
+            return 4;
         case 0x93:
+            SUB(a,e);
+            return 4;
         case 0x94:
+            SUB(a,h);
+            return 4;
         case 0x95:
+            SUB(a,l);
+            return 4;
         case 0x96:
+            SUB(a,rMemory(get_16bit(h,l)));
+            return 8;
         case 0x97:
+            SUB(a,a);
+            return 4;
         case 0x98:
+            SUB(a, b, true);
+            return 4;
         case 0x99:
+            SUB(a, c, true);
+            return 4;
         case 0x9a:
+            SUB(a, d, true);
+            return 4;
         case 0x9b:
+            SUB(a, e, true);
+            return 4;
         case 0x9c:
+            SUB(a, h, true);
+            return 4;
         case 0x9d:
+            SUB(a, l, true);
+            return 4;
         case 0x9e:
+            SUB(a, rMemory(get_16bit(h,l)), true);
+            return 8;
         case 0x9f:
+            SUB(a, a, true);
+            return 4;
         case 0xa0:
+            AND(a,b);
+            return 4;
         case 0xa1:
+            AND(a,c);
+            return 4;
         case 0xa2:
+            AND(a,d);
+            return 4;
         case 0xa3:
+            AND(a,e);
+            return 4;
         case 0xa4:
+            AND(a,h);
+            return 4;
         case 0xa5:
+            AND(a,l);
+            return 4;
         case 0xa6:
+            AND(a,rMemory(get_16bit(h,l)));
+            return 8;
         case 0xa7:
+            AND(a,a);
+            return 4;
         case 0xa8:
+            XOR(a,b);
+            return 4;
         case 0xa9:
+            XOR(a,c);
+            return 4;
         case 0xaa:
+            XOR(a,d);
+            return 4;
         case 0xab:
+            XOR(a,e);
+            return 4;
         case 0xac:
+            XOR(a,h);
+            return 4;
         case 0xad:
+            XOR(a,l);
+            return 4;
         case 0xae:
+            XOR(a,rMemory(get_16bit(h,l)));
+            return 8;
         case 0xaf:
+            XOR(a,a);
+            return 4;
         case 0xb0:
+            OR(a, b);
+            return 4;
         case 0xb1:
+            OR(a, c);
+            return 4;
         case 0xb2:
+            OR(a, d);
+            return 4;
         case 0xb3:
+            OR(a, e);
+            return 4;
         case 0xb4:
+            OR(a, h);
+            return 4;
         case 0xb5:
+            OR(a, l);
+            return 4;
         case 0xb6:
+            OR(a, rMemory(get_16bit(h,l)));
+            return 8;
         case 0xb7:
+            OR(a, a);
+            return 4;
         case 0xb8:
+            CP(a, b);
+            return 4;
         case 0xb9:
+            CP(a,c);
+            return 4;
         case 0xba:
+            CP(a, d);
+            return 4;
         case 0xbb:
+            CP(a, e);
+            return 4;
         case 0xbc:
+            CP(a, h);
+            return 4;
         case 0xbd:
+            CP(a, l);
+            return 4;
         case 0xbe:
+            CP(a, rMemory(get_16bit(h,l)));
+            return 8;
         case 0xbf:
+            CP(a,a);
+            return 4;
         case 0xc0:
+            
         case 0xc1:
         case 0xc2:
         case 0xc3:

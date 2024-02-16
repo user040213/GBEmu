@@ -75,6 +75,12 @@ class CPU
         bool ramEnabled;
         bool romRamMode;
 
+        // Interrupts
+        bool interrupt;
+        // I don't know if they can be queued back to back, if they can we need two variables
+        bool prepareDisable;
+        bool prepareEnable;
+
     public:
         /**** 
         General Purpose functions 
@@ -83,7 +89,8 @@ class CPU
         unsigned short set_16bit(unsigned short val, unsigned char &hi, unsigned char &lo);
         unsigned char get_bit(unsigned char val, unsigned char bit);
         unsigned char get_8bit(unsigned short val, bool hi=false);
-
+        void load_lo(unsigned short &reg, unsigned char data);
+        void load_hi(unsigned short &reg, unsigned char data);
         /****
         Basic Operators
         NOTE: Gameboy reads 8 bit values 
@@ -96,7 +103,7 @@ class CPU
         void AND(unsigned char &regTarget, unsigned char data);
         void OR(unsigned char &regTarget, unsigned char data);
         void XOR(unsigned char &regTarget, unsigned char data);
-        //Implement in subroutine void RET();
+        bool RET(bool conditional=false, unsigned char condition=0, bool conditionReq=0);
         void RLA(unsigned char &regTarget, bool withCarry=false);
         void RRA(unsigned char &regTarget, bool withCarry=false);
         void INC(unsigned char &regTarget, bool setFlag=true);
@@ -125,9 +132,9 @@ class CPU
         void SLA(unsigned char &regTarget);
         void SRA(unsigned char &regTarget);
         void SWAP(unsigned char &regTarget);
-        void RES(unsigned char &regTarget);
-        void SET(unsigned char &regTarget);
-        void BIT(unsigned char &regTarget);
+        void RES(unsigned char &regTarget, unsigned char bit);
+        void SET(unsigned char &regTarget, unsigned char bit);
+        void BIT(unsigned char &regTarget, unsigned char bit);
         // Merged in RRA void RR();
         // Merged in RRC void RRC();
 

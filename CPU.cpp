@@ -14,7 +14,7 @@ CPU::CPU()
     h = 0x01;
     l = 0x4d;
     pc = 0x100;
-    s = 0xfe;
+    s = 0xff;
     p = 0xfe;
 
     //Banks
@@ -76,6 +76,17 @@ unsigned char get_8bit(unsigned short val, bool hi)
     {
         return (unsigned char)(val);
     }
+}
+
+void CPU::load_lo(unsigned short &reg, unsigned char data)
+{
+    reg &= 0b11110000;
+    reg |= data;
+}
+void CPU::load_hi(unsigned short &reg, unsigned char data)
+{
+    reg &= 0b00001111;
+    reg |= data << 4;
 }
 
 /****

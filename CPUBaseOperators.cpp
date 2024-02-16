@@ -154,6 +154,30 @@ void CPU::XOR(unsigned char &regTarget, unsigned char data)
     // C always 0
 }
 
+bool CPU::RET(bool conditional, unsigned char condition, bool conditionReq)
+{
+    if(!conditional)
+    {
+        INC_16(s,p);
+        load_lo(pc,rMemory(get_16bit(s,p)));
+        INC_16(s,p);
+        load_hi(pc,rMemory(get_16bit(s,p)));
+        return true;
+    }
+    else
+    {
+        if(get_bit(f, condition) == conditionReq)
+        {
+            INC_16(s,p);
+            load_lo(pc,rMemory(get_16bit(s,p)));
+            INC_16(s,p);
+            load_hi(pc,rMemory(get_16bit(s,p)));
+            return true;
+        }
+    }
+    return false;
+}
+
 void CPU::RLA(unsigned char &regTarget, bool withCarry)
 {
     // RL instruction
@@ -399,17 +423,40 @@ void CPU::RST()
 void CPU::PUSH(unsigned char regHi, unsigned char regLo)
 {
     DEC_16(s, p);
-    memBus[get_16bit(s,p)] = regHi;
+    wMemory(get_16bit(s,p), regHi);
     DEC_16(s, p);
-    memBus[get_16bit(s,p)] = regLo;
+    wMemory(get_16bit(s,p), regLo);
 }
 
 void CPU::POP(bool AF, unsigned char &regHi, unsigned char &regLo)
 {
         INC_16(s,p);
-        LD(regLo, memBus[get_16bit(s,p)]);
+        LD(regLo, rMemory(get_16bit(s,p)));
         INC_16(s,p);
-        LD(regHi, memBus[get_16bit(s,p)]);
+        LD(regHi, rMemory(get_16bit(s,p)));
+        if(AF) // set flags
+        {
+            RES(f, F_Z);
+            RES(f, F_N);
+            RES(f, F_H);
+            RES(f, F_C);
+            if(get_bit(regLo, F_Z))
+            {
+                SET(f, F_Z);
+            }
+            if(get_bit(regLo, F_N))
+            {
+                SET(f, F_N);
+            }
+            if(get_bit(regLo, F_H))
+            {
+                SET(f, F_H);
+            }
+            if(get_bit(regLo, F_C))
+            {
+                SET(f, F_C);
+            }
+        }
 }
 
 void CPU::DI()
@@ -542,22 +589,22 @@ void CPU::SWAP(unsigned char &regTarget)
     f &= ~((0b1) << F_C);
 }
 
-void CPU::RES(unsigned char &regTarget)
+void CPU::RES(unsigned char &regTarget, unsigned char bit)
 {
-    regTarget &= ~((0b1) << 3);
+    regTarget &= ~((0b1) << bit);
 
     // No flags affected
 }
 
-void CPU::SET(unsigned char &regTarget)
+void CPU::SET(unsigned char &regTarget, unsigned char bit)
 {
-    regTarget |= 0b1 << 3;
+    regTarget |= 0b1 << bit;
 }
 
-void CPU::BIT(unsigned char &regTarget)
+void CPU::BIT(unsigned char &regTarget, unsigned char bit)
 {
     //Z
-    if(get_bit(regTarget, 3) == 1)
+    if(get_bit(regTarget, bit) == 1)
     {
         f |= 0b1 << F_Z;
     }
