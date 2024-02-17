@@ -598,8 +598,30 @@ void CPU::SRA(unsigned char &regTarget)
     f &= ~((0b1) << F_C);
     f |= get_bit(regTarget, 0) << F_C;
     regTarget >> 1;
-    regTarget &= ~((0b1) << 7);
+    RES(regTarget, 7); // hypothetically unneeded
     regTarget |= get_bit(initial, 7) << 7;
+
+    f &= ~((0b1) << F_Z);
+    
+    //Z:
+    if (regTarget == 0)
+    {
+        f |= 0b1 << F_Z;
+    }
+    //N:0
+    f &= ~((0b1) << F_N);
+    //H:0
+    f &= ~((0b1) << F_H);
+    //C: Accounted for above
+}
+
+void CPU::SRL(unsigned char &regTarget)
+{
+    unsigned char initial = regTarget;
+    f &= ~((0b1) << F_C);
+    f |= get_bit(regTarget, 0) << F_C;
+    regTarget >> 1;
+    RES(regTarget, 7); // Hypothetically unneeded
 
     f &= ~((0b1) << F_Z);
     
@@ -654,7 +676,7 @@ void CPU::SET(unsigned char &regTarget, unsigned char bit)
     regTarget |= 0b1 << bit;
 }
 
-void CPU::BIT(unsigned char &regTarget, unsigned char bit)
+void CPU::BIT(unsigned char regTarget, unsigned char bit)
 {
     //Z
     if(get_bit(regTarget, bit) == 1)

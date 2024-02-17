@@ -948,54 +948,165 @@ int CPU::performCBOpCode()
             wMemory(get_16bit(h,l), temp);
             return 16;
         case 0x0f:
+            RRA(a);
+            return 8;
         case 0x10:
+            RLA(b, true);
+            return 8;
         case 0x11:
+            RLA(c, true);
+            return 8;
         case 0x12:
+            RLA(d, true);
+            return 8;
         case 0x13:
+            RLA(e, true);
+            return 8;
         case 0x14:
+            RLA(h, true);
+            return 8;
         case 0x15:
+            RLA(l, true);
+            return 8;
         case 0x16:
+            unsigned char temp{rMemory(get_16bit(h,l))};
+            RLA(temp, true);
+            wMemory(get_16bit(h,l), temp);
+            return 16;
         case 0x17:
+            RLA(a, true);
+            return 8;
         case 0x18:
+            RRA(b, true);
+            return 8;
         case 0x19:
+            RRA(c, true);
+            return 8;
         case 0x1a:
+            RRA(d, true);
+            return 8;
         case 0x1b:
+            RRA(e, true);
+            return 8;
         case 0x1c:
+            RRA(h, true);
+            return 8;
         case 0x1d:
+            RRA(l, true);
+            return 8;
         case 0x1e:
+            unsigned char temp{rMemory(get_16bit(h,l))};
+            RRA(temp, true);
+            wMemory(get_16bit(h,l), temp);
+            return 16;
         case 0x1f:
+            RRA(a, true);
+            return 8;
         case 0x20:
+            SLA(b);
+            return 8;
         case 0x21:
+            SLA(c);
+            return 8;
         case 0x22:
+            SLA(d);
+            return 8;
         case 0x23:
+            SLA(e);
+            return 8;
         case 0x24:
+            SLA(h);
+            return 8;
         case 0x25:
+            SLA(l);
+            return 8;
         case 0x26:
+            unsigned char temp{rMemory(get_16bit(h,l))};
+            SLA(temp);
+            wMemory(rMemory(get_16bit(h,l)), temp);
+            return 16;
         case 0x27:
+            SLA(a);
+            return 8;
         case 0x28:
+            SRA(b);
+            return 8;
         case 0x29:
+            SRA(c);
+            return 8;
         case 0x2a:
+            SRA(d);
+            return 8;
         case 0x2b:
+            SRA(e);
+            return 8;
         case 0x2c:
+            SRA(h);
+            return 8;
         case 0x2d:
+            SRA(l);
+            return 8;
         case 0x2e:
+            unsigned char temp{rMemory(get_16bit(h,l))};
+            SRA(temp);
+            wMemory(get_16bit(h,l), temp);
+            return 16;
         case 0x2f:
+            SRA(a);
+            return 8;
         case 0x30:
+            SWAP(b);
+            return 8;
         case 0x31:
+            SWAP(c);
+            return 8;
         case 0x32:
+            SWAP(d);
+            return 8;
         case 0x33:
+            SWAP(e);
+            return 8;
         case 0x34:
+            SWAP(h);
+            return 8;
         case 0x35:
+            SWAP(l);
+            return 8;
         case 0x36:
+            unsigned char temp{rMemory(get_16bit(h,l))};
+            SWAP(temp);
+            wMemory(get_16bit(h,l), temp);
+            return 16;
         case 0x37:
+            SWAP(a);
+            return 8;
         case 0x38:
+            SRL(b);
+            return 8; 
         case 0x39:
+            SRL(c);
+            return 8;
         case 0x3a:
+            SRL(d);
+            return 8;
         case 0x3b:
+            SRL(e);
+            return 8;
         case 0x3c:
+            SRL(h);
+            return 8;
         case 0x3d:
+            SRL(l);
+            return 8;
         case 0x3e:
+            unsigned char temp{rMemory(get_16bit(h,l))};
+            SRL(temp);
+            wMemory(get_16bit(h,l), temp);
+            return 16;
         case 0x3f:
+            SRA(a);
+            return 8;
+        // use fall through
         case 0x40:
         case 0x41:
         case 0x42:
@@ -1060,6 +1171,51 @@ int CPU::performCBOpCode()
         case 0x7d:
         case 0x7e:
         case 0x7f:
+            unsigned char bit{0};
+            unsigned char cycles{8};
+
+            for(unsigned char opHi{0x40}; opHi < (op & 0xF0); opHi += 0x10)
+            {
+                bit += 2;
+            }
+            if((op & 0x0F) > 0x07)
+            {
+                bit++;
+            }
+            if((op & 0x0F) == 0x0 || (op & 0x0F) == 0x8)
+            {
+                BIT(b, bit);
+            }
+            else if((op & 0x0F) == 0x1 || (op & 0x0F) == 0x9)
+            {
+                BIT(c, bit);
+            }
+            else if((op & 0x0F) == 0x2 || (op & 0x0F) == 0xA)
+            {
+                BIT(d, bit);
+            }
+            else if((op & 0x0F) == 0x3 || (op & 0x0F) == 0xB)
+            {
+                BIT(e, bit);
+            }
+            else if((op & 0x0F) == 0x4 || (op & 0x0F) == 0xC)
+            {
+                BIT(h, bit);
+            }
+            else if((op & 0x0F) == 0x5 || (op & 0x0F) == 0xD)
+            {
+                BIT(l, bit);
+            }
+            else if((op & 0x0F) == 0x6 || (op & 0x0F) == 0xE)
+            {
+                BIT(rMemory(get_16bit(h,l)), bit);
+                cycles = 12;
+            }
+            else if((op & 0x0F) == 0x7 || (op & 0x0F) == 0xF)
+            {
+                BIT(a, bit);
+            }
+            return cycles;
         case 0x80:
         case 0x81:
         case 0x82:
@@ -1124,6 +1280,53 @@ int CPU::performCBOpCode()
         case 0xbd:
         case 0xbe:
         case 0xbf:
+            unsigned char bit{0};
+            unsigned char cycles{8};
+
+            for(unsigned char opHi{0x40}; opHi < (op & 0xF0); opHi += 0x10)
+            {
+                bit += 2;
+            }
+            if((op & 0x0F) > 0x07)
+            {
+                bit++;
+            }
+            if((op & 0x0F) == 0x0 || (op & 0x0F) == 0x8)
+            {
+                RES(b, bit);
+            }
+            else if((op & 0x0F) == 0x1 || (op & 0x0F) == 0x9)
+            {
+                RES(c, bit);
+            }
+            else if((op & 0x0F) == 0x2 || (op & 0x0F) == 0xA)
+            {
+                RES(d, bit);
+            }
+            else if((op & 0x0F) == 0x3 || (op & 0x0F) == 0xB)
+            {
+                RES(e, bit);
+            }
+            else if((op & 0x0F) == 0x4 || (op & 0x0F) == 0xC)
+            {
+                RES(h, bit);
+            }
+            else if((op & 0x0F) == 0x5 || (op & 0x0F) == 0xD)
+            {
+                RES(l, bit);
+            }
+            else if((op & 0x0F) == 0x6 || (op & 0x0F) == 0xE)
+            {
+                unsigned char temp{rMemory(get_16bit(h,l))};
+                RES(temp, bit);
+                wMemory(get_16bit(h,l), temp);
+                cycles = 16;
+            }
+            else if((op & 0x0F) == 0x7 || (op & 0x0F) == 0xF)
+            {
+                RES(a, bit);
+            }
+            return cycles;
         case 0xc0:
         case 0xc1:
         case 0xc2:
@@ -1188,5 +1391,52 @@ int CPU::performCBOpCode()
         case 0xfd:
         case 0xfe:
         case 0xff:
+            unsigned char bit{0};
+            unsigned char cycles{8};
+
+            for(unsigned char opHi{0x40}; opHi < (op & 0xF0); opHi += 0x10)
+            {
+                bit += 2;
+            }
+            if((op & 0x0F) > 0x07)
+            {
+                bit++;
+            }
+            if((op & 0x0F) == 0x0 || (op & 0x0F) == 0x8)
+            {
+                SET(b, bit);
+            }
+            else if((op & 0x0F) == 0x1 || (op & 0x0F) == 0x9)
+            {
+                SET(c, bit);
+            }
+            else if((op & 0x0F) == 0x2 || (op & 0x0F) == 0xA)
+            {
+                SET(d, bit);
+            }
+            else if((op & 0x0F) == 0x3 || (op & 0x0F) == 0xB)
+            {
+                SET(e, bit);
+            }
+            else if((op & 0x0F) == 0x4 || (op & 0x0F) == 0xC)
+            {
+                SET(h, bit);
+            }
+            else if((op & 0x0F) == 0x5 || (op & 0x0F) == 0xD)
+            {
+                SET(l, bit);
+            }
+            else if((op & 0x0F) == 0x6 || (op & 0x0F) == 0xE)
+            {
+                unsigned char temp{rMemory(get_16bit(h,l))};
+                SET(temp, bit);
+                wMemory(get_16bit(h,l), temp);
+                cycles = 16;
+            }
+            else if((op & 0x0F) == 0x7 || (op & 0x0F) == 0xF)
+            {
+                SET(a, bit);
+            }
+            return cycles;
     }
 }

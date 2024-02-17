@@ -133,10 +133,11 @@ class CPU
         // Merged in RL void RL();
         void SLA(unsigned char &regTarget);
         void SRA(unsigned char &regTarget);
+        void SRL(unsigned char &regTarget);
         void SWAP(unsigned char &regTarget);
         void RES(unsigned char &regTarget, unsigned char bit);
         void SET(unsigned char &regTarget, unsigned char bit);
-        void BIT(unsigned char &regTarget, unsigned char bit);
+        void BIT(unsigned char regTarget, unsigned char bit);
         // Merged in RRA void RR();
         // Merged in RRC void RRC();
         void ADDSP();
