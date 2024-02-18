@@ -2,11 +2,13 @@
 /****
 Returns are T states taken to complete
  ****/
-int CPU::performOpCode(unsigned char op)
+int CPU::performOpCode()
 {
+    unsigned char op{rMemory(pc)};
     switch(op)
     {
         case 0x00: // NOP
+            pc++;
             return 4;
         case 0x01: // LD BC n16
             c = GET_IMMEDIATE();
@@ -29,6 +31,7 @@ int CPU::performOpCode(unsigned char op)
             return 8;
         case 0x07: // RLCA
             RLA(a);
+            pc++;
             return 4;
         case 0x08: // LD [a16] SP
             // write to address a16 value of SP in little endian
@@ -37,14 +40,12 @@ int CPU::performOpCode(unsigned char op)
             unsigned char hi{GET_IMMEDIATE()};
             unsigned short addr{(unsigned short)hi << 8};
             addr |= lo;
-
+            pc++;
             wMemory(addr, get_8bit(get_16bit(s, p), false));
             wMemory(addr+1, get_8bit(get_16bit(s, p), true));
-            
             return 20;
         case 0x09: // ADD HL BC
-            ADD(l, c, false);
-            ADD(h, b, true, true, false);
+            ADD_16(h, l, b, c);
             return 8;
         case 0x0a: // LD A BC
             LD(a, rMemory(get_16bit(b,c)));
@@ -68,6 +69,7 @@ int CPU::performOpCode(unsigned char op)
             // don't really care about this instruction
             // its not needed for playable functionality
             // consider implementing for physical builds
+            pc += 2;
             return 4;
         case 0x11:
             LD(e, GET_IMMEDIATE());
@@ -90,13 +92,13 @@ int CPU::performOpCode(unsigned char op)
             return 8;
         case 0x17:
             RLA(a, true);
+            pc++;
             return 4;
         case 0x18:
             JR();
             return 12;
         case 0x19:
-            ADD(l, e);
-            ADD(h, d, true, true, false);
+            ADD_16(h, l, d, e);
             return 8;
         case 0x1a:
             LD(a, rMemory(get_16bit(d,e)));
@@ -159,8 +161,7 @@ int CPU::performOpCode(unsigned char op)
                 return 8;
             }
         case 0x29:
-            ADD(l, l);
-            ADD(h, h, true, true, false);
+            ADD_16(h, l, h, l);
             return 8;
         case 0x2a:
             wMemory(get_16bit(h,l), a);
@@ -217,8 +218,7 @@ int CPU::performOpCode(unsigned char op)
             }
             else{return 8;}
         case 0x39:
-            ADD(l, p);
-            ADD(h, s, true, true, false);
+            ADD_16(h, l, s, p);
             return 8;
         case 0x3a:
             LD(a, rMemory(get_16bit(h,l)));
@@ -683,7 +683,8 @@ int CPU::performOpCode(unsigned char op)
                 return 12;
             }
         case 0xcb:
-            return performCBOpCode();
+            pc++;
+            return performCBOpCode() + 4;
         case 0xcc:
             if(CALL(true, F_Z, true))
             {
@@ -748,7 +749,7 @@ int CPU::performOpCode(unsigned char op)
             }
         case 0xd9:
             RET();
-            EI();
+            IME = true;
             return 16;
         case 0xda:
             if(JP(GET_IMMEDIATE(), GET_IMMEDIATE(), true, F_C, true))
@@ -895,9 +896,9 @@ int CPU::performCBOpCode()
 {
     // opcodes stored in program counter
     unsigned char op = rMemory(pc);
-    pc++;
     switch(op)
     {
+        pc+= 2;
         case 0x00:
             RLA(b);
             return 8;
@@ -949,6 +950,7 @@ int CPU::performCBOpCode()
             return 16;
         case 0x0f:
             RRA(a);
+            pc++;
             return 8;
         case 0x10:
             RLA(b, true);
@@ -1001,6 +1003,7 @@ int CPU::performCBOpCode()
             return 16;
         case 0x1f:
             RRA(a, true);
+            pc++;
             return 8;
         case 0x20:
             SLA(b);

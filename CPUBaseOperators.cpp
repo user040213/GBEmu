@@ -4,6 +4,7 @@
 void CPU::LD(unsigned char &regTarget, unsigned char data)
 {
     regTarget = data;
+    pc++;
 }
 void CPU::LDH(unsigned char offset, bool targetA)
 {
@@ -14,12 +15,14 @@ void CPU::LDH(unsigned char offset, bool targetA)
     else
     {
         wMemory(0xFF00 + offset, a);
+        pc++;
     }
 }
 bool CPU::JR(bool conditional, unsigned char condition, bool conditionReq)
 {
     // increment program counter by offset
     char offset{GET_IMMEDIATE()};
+    pc += 2;
     if(conditional)
     {
         if(get_bit(f, condition) == conditionReq)
@@ -41,6 +44,7 @@ bool CPU::JR(bool conditional, unsigned char condition, bool conditionReq)
 // Little endian so lo byte is first in memory
 bool CPU::JP(unsigned char lo, unsigned char hi, bool conditional=false, unsigned char condition=0, bool conditionReq=false)
 {
+    pc++;
     if(conditional)
     {
         if(get_bit(f, condition) == conditionReq)
@@ -56,12 +60,13 @@ bool CPU::JP(unsigned char lo, unsigned char hi, bool conditional=false, unsigne
         return true;
     }
 }
-void CPU::ADD(unsigned char &regTarget, unsigned char data, bool withCarry, bool setFlag, bool setZ)
+void CPU::ADD(unsigned char &regTarget, unsigned char data, bool withCarry)
 {
-    // for a 16 bit operation we would run two 8 bit operations
     // first on lower bits (no carry), then upper bits (with carry)
     // overflow on bit occurs if on data and target, that bit is 1
     unsigned char initial = regTarget;
+
+    pc++;
    
     // if we are carrying and the carry bit is set
     if(withCarry && (get_bit(f, F_C) == 1))
@@ -72,37 +77,45 @@ void CPU::ADD(unsigned char &regTarget, unsigned char data, bool withCarry, bool
     regTarget += data; 
 
     // We should reset our flags first
-    if (setFlag)
+        
+    f &= ~((0b1) << F_N);
+    f &= ~((0b1) << F_H);
+    f &= ~((0b1) << F_C);
+    
+    // Z flag
+    if((regTarget == 0))
     {
-        
-        f &= ~((0b1) << F_N);
-        f &= ~((0b1) << F_H);
-        f &= ~((0b1) << F_C);
-        
-        // Z flag
-        if((regTarget == 0) && (setZ))
-        {
-            f &= ~((0b1) << F_Z);
-            f |= (0b1 << F_Z);
-        }
-        // N flag: on addition, n flag is always 0 so do nothing to it
-        // H flag: check the half sum for overflow
-        if(((initial & 0b1111) + (data & 0b1111)) > 0b1111)
-        {
-            f |= (0b1 << F_H);
-        }
-        // C flag
-        if ((((unsigned short)(initial) + data)) > 0b11111111)
-        {
-            f |= (0b1 << F_C);
-        }
+        f &= ~((0b1) << F_Z);
+        f |= (0b1 << F_Z);
     }
+    // N flag: on addition, n flag is always 0 so do nothing to it
+    // H flag: check the half sum for overflow
+    if(((initial & 0b1111) + (data & 0b1111)) > 0b1111)
+    {
+        f |= (0b1 << F_H);
+    }
+    // C flag
+    if ((((unsigned short)(initial) + data)) > 0b11111111)
+    {
+        f |= (0b1 << F_C);
+    }
+}
+
+void CPU::ADD_16(unsigned char &hi, unsigned char &lo, unsigned char operandHi, unsigned char operandLo)
+{
+    unsigned char oldFlag{f};
+    ADD(lo, operandLo);
+    pc--;
+    ADD(hi, operandHi, true);
+    f &= ~(0b1 << F_Z);
+    oldFlag &= (0b1 << F_Z);
+    f |= oldFlag;
 }
 
 void CPU::SUB(unsigned char &regTarget, unsigned char data, bool withCarry, bool setFlag)
 {
     unsigned char initial = regTarget;
-
+    pc++;
     if(withCarry && (get_bit(f, F_C) == 1))
     {
         data++;
@@ -138,7 +151,7 @@ void CPU::SUB(unsigned char &regTarget, unsigned char data, bool withCarry, bool
 void CPU::AND(unsigned char &regTarget, unsigned char data)
 {
     regTarget &= data;
-
+    pc++;
     f = 0;
 
     // Z
@@ -157,6 +170,7 @@ void CPU::OR(unsigned char &regTarget, unsigned char data)
     regTarget |= data;
 
     f = 0;
+    pc++;
     
     // Z
     if(regTarget == 0)
@@ -182,29 +196,41 @@ void CPU::XOR(unsigned char &regTarget, unsigned char data)
     // N always 0
     // H always 0
     // C always 0
+    pc++;
 }
 
 bool CPU::RET(bool conditional, unsigned char condition, bool conditionReq)
 {
+    unsigned short spInc{get_16bit(s,p)};
     if(!conditional)
     {
-        INC_16(s,p);
+        
         load_lo(pc,rMemory(get_16bit(s,p)));
-        INC_16(s,p);
+        spInc++;
+        s = get_8bit(spInc, true);
+        s = get_8bit(spInc, false);
         load_hi(pc,rMemory(get_16bit(s,p)));
+        spInc++;
+        s = get_8bit(spInc, true);
+        s = get_8bit(spInc, false);
         return true;
     }
     else
     {
         if(get_bit(f, condition) == conditionReq)
         {
-            INC_16(s,p);
             load_lo(pc,rMemory(get_16bit(s,p)));
-            INC_16(s,p);
+            spInc++;
+            s = get_8bit(spInc, true);
+            s = get_8bit(spInc, false);
             load_hi(pc,rMemory(get_16bit(s,p)));
+            spInc++;
+            s = get_8bit(spInc, true);
+            s = get_8bit(spInc, false);
             return true;
         }
     }
+    pc++;
     return false;
 }
 
@@ -269,7 +295,7 @@ void CPU::RRA(unsigned char &regTarget, bool withCarry)
 void CPU::INC(unsigned char &regTarget, bool setFlag)
 {
     regTarget++;
-
+    pc++;
     if (setFlag)
     {
         // Z
@@ -294,6 +320,7 @@ void CPU::INC_MEM(unsigned short addr)
     unsigned char data{rMemory(addr)};
     data++;
     wMemory(addr, data);
+    pc++;
 
     // Z
     f &= ~((0b1) << F_Z);
@@ -315,14 +342,22 @@ void CPU::INC_MEM(unsigned short addr)
 
 void CPU::INC_16(unsigned char &hi, unsigned char &lo)
 {
-    INC(lo);
-    ADD(hi, 0, true, false, false);
+    pc++;
+    if((lo + 1) > U_BYTE_MAX)
+    {
+        hi++;
+        lo++;
+    }
+    else
+    {
+        lo++;
+    }
 }
 
 void CPU::DEC(unsigned char &regTarget, bool setFlag)
 {
     regTarget--;
-
+    pc++;
     if (setFlag)
     {
         f &= ~((0b1) << F_Z);
@@ -348,6 +383,7 @@ void CPU::DEC_MEM(unsigned short addr)
 {
     unsigned char data{rMemory(addr)};
     data++;
+    pc++;
     wMemory(addr, data);
 
     f &= ~((0b1) << F_Z);
@@ -370,8 +406,11 @@ void CPU::DEC_MEM(unsigned short addr)
 
 void CPU::DEC_16(unsigned char &hi, unsigned char &lo)
 {
-    DEC(lo);
-    SUB(hi, 0, true, false);
+    unsigned short temp{get_16bit(hi,lo)};
+    temp--;
+    pc++;
+    hi = get_8bit(temp, true);
+    lo = get_8bit(temp);
 }
 
 // Note: Division didn't exist, so while mod would be used now to get digits, this was the
@@ -392,6 +431,7 @@ void CPU::DAA()
     // For a digit, if their |subtraction| is >9 we can subtract 6 to correct it to BCD
     // There are a ton of edge cases though and I do not know if this implementation covers all of them(NEEDS TESTING)
     unsigned char c_set = 0;
+    pc++;
     // Last op was sub
     if(get_bit(f, F_N) == 1)
     {
@@ -436,6 +476,7 @@ void CPU::DAA()
 
 void CPU::SCF()
 {
+    pc++;
     // Z Flag:
     f &= ~((0b1) << F_Z);
     // N Flag: Unaffected
@@ -453,6 +494,7 @@ void CPU::RST(unsigned short vec)
 
 void CPU::PUSH(unsigned char regHi, unsigned char regLo)
 {
+    pc++;
     DEC_16(s, p);
     wMemory(get_16bit(s,p), regHi);
     DEC_16(s, p);
@@ -461,10 +503,11 @@ void CPU::PUSH(unsigned char regHi, unsigned char regLo)
 
 void CPU::POP(bool AF, unsigned char &regHi, unsigned char &regLo)
 {
-        INC_16(s,p);
+        pc++;
         LD(regLo, rMemory(get_16bit(s,p)));
         INC_16(s,p);
         LD(regHi, rMemory(get_16bit(s,p)));
+        INC_16(s,p);
         if(AF) // set flags
         {
             RES(f, F_Z);
@@ -493,10 +536,12 @@ void CPU::POP(bool AF, unsigned char &regHi, unsigned char &regLo)
 void CPU::DI()
 {
     prepareDisable = 1;
+    pc++;
 }
 
 void CPU::CCF()
 {
+    pc++;
     // Z: Unaffected
     // N: 0
     f &= ~((0b1) << F_N);
@@ -508,6 +553,8 @@ void CPU::CCF()
 
 void CPU::CPL()
 {
+    pc++;
+    a = ~a;
     //Z: Unaffected
     //N: 1
     f |= (0b1) << F_N;
@@ -521,6 +568,7 @@ void CPU::CP(unsigned char regTarget, unsigned char data)
     unsigned char initial = regTarget;
 
     regTarget -= data;
+    pc++;
 
     // We should reset flags first
     f = 0;
@@ -548,6 +596,8 @@ bool CPU::CALL(bool conditional=false, unsigned char condition=0, bool condition
 {
     unsigned char lo{GET_IMMEDIATE()};
     unsigned char hi{GET_IMMEDIATE()};
+    pc += 2;
+
     if(conditional)
     {
         if(get_bit(f, condition) == conditionReq)
@@ -564,11 +614,13 @@ bool CPU::CALL(bool conditional=false, unsigned char condition=0, bool condition
         pc = get_16bit(hi, lo);
         return true;
     }
+    pc++;
 }
 
 void CPU::EI()
 {
     prepareEnable = 1;
+    pc++;
 }
 
 void CPU::SLA(unsigned char &regTarget)
@@ -700,10 +752,8 @@ void CPU::ADDSP()
     unsigned short sp_temp{get_16bit(s,p)};
 
     sp_temp += data;
-    RES(f, F_Z);
-    RES(f, F_N);
-    RES(f, F_H);
-    RES(f, F_C);
+    f = 0;
+    pc += 2;
     if(data < 0)
     {
         if (((char)(p & 0b1111) + (data & 0b1111)) < 0)

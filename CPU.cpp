@@ -32,6 +32,8 @@ CPU::CPU()
     MBC3 = false;
     MBC5 = false;
 
+    IME = false;
+
 
 }
 
@@ -42,7 +44,10 @@ CPU::~CPU()
     delete [] romBank;
     delete [] ramBank;
 }
-
+unsigned short CPU::get_pc()
+{
+    return pc;
+}
 unsigned short CPU::get_16bit(unsigned char hi, unsigned char lo) const
 {
     // first 8 bits are hi, last 8 bits are lo
@@ -323,6 +328,11 @@ void CPU::wMemory(unsigned short addr, unsigned char data)
     // addresses FEA0 to FEFF are unusable and prohibited
     else if((addr >= 0xfea0) && (addr <= 0xfeff))
     {}
+
+    else if(addr == DIV)
+    {
+        memBus[DIV] = 0;  
+    }
     
     else
     {
@@ -357,3 +367,153 @@ void CPU::STOP()
     return;
 }
 */
+
+void CPU::doTimer(int cycles)
+{
+    // DIV always updates regardless of TAC enable
+    divCycles += cycles;
+    if(divCycles >= DIV_COUNT_MAX)
+    {
+        // NOTE: Any write to DIV address just resets it to 0x00
+        divCycles = 0;
+        // We must write directly to the address and not use wMemory
+        // wMemory will be used for resetting on write
+        ++memBus[DIV];
+    }
+
+
+    // Main timer
+    if(get_bit(rMemory(TAC), 2) == 1)
+    {
+        tCycles += cycles;
+        if(tCycles >= tCyclesCap)
+        {
+            if(rMemory(TIMA) == U_BYTE_MAX)
+            {
+                // reset and do interrupt
+                wMemory(TIMA, rMemory(TMA));
+                IFToggle(TIMER_BIT);
+                // Check for timer clock change
+                changeTClock(rMemory(TAC));
+
+                
+            }
+            else
+            {
+                wMemory(TIMA, rMemory(TIMA)+1);
+            }
+
+            tCycles = 0;
+        }
+    }
+}
+
+void CPU::changeTClock(unsigned char data)
+{
+    if(get_bit(data, 0) == 0)
+    {
+        if(get_bit(data, 1) == 1)
+        {
+            tCyclesCap = CLOCK_10;
+        }
+        else
+        {
+            tCyclesCap = CLOCK_00;
+        }
+    }
+    else
+    {
+        if(get_bit(data, 1) == 1)
+        {
+            tCyclesCap = CLOCK_11;
+        }
+        else
+        {
+            tCyclesCap = CLOCK_01;
+        }
+    }
+}
+
+void CPU::IEToggle(unsigned char bit, bool enable)
+{   
+    unsigned char data{rMemory(0xFFFF)};
+    if(enable)
+    {
+        SET(data, bit);
+    }
+    else
+    {
+        RES(data, bit);
+    }
+
+    wMemory(0xFFFF, data);
+}
+
+void CPU::IFToggle(unsigned char bit, bool enable)
+{
+    unsigned char data{rMemory(0xFF0F)};
+    if(enable)
+    {
+        SET(data, bit);
+    }
+    else
+    {
+        RES(data, bit);
+    }
+
+    wMemory(0xFF0F, data);
+}
+
+void CPU::handleInterrupts()
+{
+    if(IME)
+    {
+        // Supposedly IF flag can have multiple bits set, this is the priority in such a case:
+            // Highest: Bit 0... Lowest Bit 4
+        unsigned char IFData{rMemory(0xFF0F)};
+        unsigned char IEData{rMemory(0xFFFF)}; 
+        for(unsigned char bit{VBLANK_BIT}; bit < JOYPAD_BIT-1; bit++)
+        {
+            if(get_bit(IEData, bit) == 1)
+            {
+                // now we can check if we want to run an interrupt
+                if(get_bit(IFData, bit) == 1)
+                {
+                    // perform corresponding interrupt
+                    doInterrupt(bit);
+                }
+            }
+        }
+    }
+}
+
+void CPU::doInterrupt(unsigned char bitCalled)
+{
+    // Steps:
+    // Disable IME and IF bit used
+    IME = false;
+    IFToggle(bitCalled, false);
+    // Execute two wait states (2 M cycles)
+    // Save current PC on stack
+    PUSH(get_8bit(pc, true), get_8bit(pc));
+    // set program counter to corresponding interrupt instruction
+    switch(bitCalled)
+    {
+        case VBLANK_BIT:
+            pc = 0x40;
+            return;
+        case LCD_BIT:
+            pc = 0x48;
+            return;
+        case TIMER_BIT:
+            pc = 0x50;
+            return;
+        case SERIAL_BIT:
+            pc = 0x58;
+            return;
+        case JOYPAD_BIT:
+            pc = 0x60;
+            return;
+    }
+
+}

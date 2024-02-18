@@ -8,7 +8,31 @@
 #define F_H 5
 #define F_C 4
 
-// 8 bit registers
+// macros for timers
+#define DIV 0xFF04
+#define TIMA 0xFF05
+#define TMA 0xFF06
+#define TAC 0xFF07
+
+// For clock speed of 4194304 Hz
+// These values are a little "sketchy", I don't know if this is a correct formulation of cycles before increment
+// These should be T cycles before increment
+#define DIV_COUNT_MAX 256
+#define CLOCK_00 1024
+#define CLOCK_01 16
+#define CLOCK_10 64
+#define CLOCK_11 256
+
+// macros for interrupt flags
+#define VBLANK_BIT 0
+#define LCD_BIT    1
+#define TIMER_BIT  2
+#define SERIAL_BIT 3
+#define JOYPAD_BIT 4
+
+// max values
+#define U_BYTE_MAX 0xFF
+
 class CPU
 {
 
@@ -46,10 +70,7 @@ class CPU
         unsigned char s;
         unsigned char p;
 
-        // Interrupts
-        bool IME; // interrupts can only be run if IME = 1;
-            // 0xFFFF: Interrupt Enable
-            // 0xFF0F: Interrupt Flag
+        
 
         // Memory
         // 8 bit cpu with 16 bit memory bus
@@ -76,10 +97,19 @@ class CPU
         bool romRamMode;
 
         // Interrupts
+        bool IME; // interrupts can only be run if IME = 1;
+            // 0xFFFF: Interrupt Enable
+            // 0xFF0F: Interrupt Flag
         bool interrupt;
         // I don't know if they can be queued back to back, if they can we need two variables
         bool prepareDisable;
         bool prepareEnable;
+
+        // Timer
+        bool timerEnabled;
+        int tCycles; // current number of timer cycles
+        int tCyclesCap; // cycles needed to increment
+        int divCycles;
 
     public:
         /**** 
@@ -100,7 +130,8 @@ class CPU
         void LDH(unsigned char offset, bool targetA=false);
         bool JR(bool conditional=false, unsigned char condition=0, bool conditionReq=false);
         bool JP(unsigned char lo, unsigned char hi, bool conditional=false, unsigned char condition=0, bool conditionReq=false);
-        void ADD(unsigned char &regTarget, unsigned char add, bool withCarry=false, bool setFlag=true, bool setZ=true);
+        void ADD(unsigned char &regTarget, unsigned char add, bool withCarry=false);
+        void ADD_16(unsigned char &hi, unsigned char &lo, unsigned char operandHi, unsigned char operandLo);
         void SUB(unsigned char &regTarget, unsigned char sub, bool withCarry=false, bool setFlag=true);
         void AND(unsigned char &regTarget, unsigned char data);
         void OR(unsigned char &regTarget, unsigned char data);
@@ -149,7 +180,7 @@ class CPU
         /**** 
         Opcodes
         ****/ 
-        int performOpCode(unsigned char op);
+        int performOpCode();
         // takes no arg since we have to read for opcode again
         int performCBOpCode();
         
@@ -167,8 +198,21 @@ class CPU
         void wMemory(unsigned short addr, unsigned char data);
         unsigned char rMemory(unsigned short addr) const;
         
+        /****
+        Timer
+         ****/
+        void doTimer(int cycles);
+        void changeTClock(unsigned char data);
 
-           
+        /****
+         Interrupts
+         ****/
+        void IEToggle(unsigned char bit, bool enable=true);
+        void IFToggle(unsigned char bit, bool enable=true);
+        void handleInterrupts();
+        void doInterrupt(unsigned char bitCalled);
+
+        unsigned short get_pc();
 };
 
 
