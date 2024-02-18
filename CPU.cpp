@@ -55,7 +55,7 @@ unsigned short CPU::get_16bit(unsigned char hi, unsigned char lo) const
     // cast first to ushort then move bits over
     // on cast: 00000000aaaaaaaa; thus: 8 bit shift left
 }
-unsigned short CPU::set_16bit(unsigned short val, unsigned char &hi, unsigned char &lo)
+void CPU::set_16bit(unsigned short val, unsigned char &hi, unsigned char &lo)
 {
     // first 8 bits of val replace hi
     // mask to remove last 8 bits then shift

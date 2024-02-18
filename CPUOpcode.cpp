@@ -34,16 +34,18 @@ int CPU::performOpCode()
             pc++;
             return 4;
         case 0x08: // LD [a16] SP
+        {
             // write to address a16 value of SP in little endian
             // a16 is immediate data
-            unsigned char lo{GET_IMMEDIATE()};
-            unsigned char hi{GET_IMMEDIATE()};
-            unsigned short addr{(unsigned short)hi << 8};
+            unsigned char lo{ GET_IMMEDIATE() };
+            unsigned char hi{ GET_IMMEDIATE() };
+            unsigned short addr = (unsigned short)(hi) << 8;
             addr |= lo;
             pc++;
             wMemory(addr, get_8bit(get_16bit(s, p), false));
-            wMemory(addr+1, get_8bit(get_16bit(s, p), true));
+            wMemory(addr + 1, get_8bit(get_16bit(s, p), true));
             return 20;
+        }
         case 0x09: // ADD HL BC
             ADD_16(h, l, b, c);
             return 8;
@@ -722,7 +724,7 @@ int CPU::performOpCode()
             }
         case 0xd3:
             // NO instr
-            return;
+            return 0;
         case 0xd4:
             if(CALL(true, F_C, false))
             {
@@ -761,7 +763,7 @@ int CPU::performOpCode()
             }
         case 0xdb:
             // No instr
-            return;
+            return 0;
         case 0xdc:
             if(CALL(true, F_C, true))
             {
@@ -772,7 +774,7 @@ int CPU::performOpCode()
             }
         case 0xdd:
             // No instr
-            return;
+            return 0;
         case 0xde:
             SUB(a, GET_IMMEDIATE(), true);
             return 8;
@@ -790,10 +792,10 @@ int CPU::performOpCode()
             return 8;
         case 0xe3:
             // no op
-            return;
+            return 0;
         case 0xe4:
             // no op
-            return;
+            return 0;
         case 0xe5:
             PUSH(h, l);
             return 16;
@@ -810,20 +812,22 @@ int CPU::performOpCode()
             JP(l, h);
             return 4;
         case 0xea:
-            unsigned char lo{GET_IMMEDIATE()};
-            unsigned char hi{GET_IMMEDIATE()};
+        {
+            unsigned char lo{ GET_IMMEDIATE() };
+            unsigned char hi{ GET_IMMEDIATE() };
 
             wMemory(get_16bit(hi, lo), a);
             return 16;
+        }
         case 0xeb:
             // No instr
-            return;
+            return 0;
         case 0xec:
             // No instr
-            return;
+            return 0;
         case 0xed:
             // No instr
-            return;
+            return 0;
         case 0xee:
             XOR(a, GET_IMMEDIATE());
             return 8;
@@ -844,7 +848,7 @@ int CPU::performOpCode()
             return 4;
         case 0xf4:
             // no instr
-            return;
+            return 0;
         case 0xf5:
             PUSH(a,f);
             return 16;
@@ -855,31 +859,35 @@ int CPU::performOpCode()
             RST(0x30);
             return 16;
         case 0xf8:
-            unsigned short sp_temp{get_16bit(s,p)};
+        {
+            unsigned short sp_temp{ get_16bit(s,p) };
             ADDSP();
             LD(h, s);
             LD(l, p);
             s = get_8bit(sp_temp, true);
             p = get_8bit(sp_temp);
             return 12;
+        }
         case 0xf9:
             LD(s, h);
             LD(p, l);
             return 8;
         case 0xfa:
-            unsigned char lo{GET_IMMEDIATE()};
-            unsigned char hi{GET_IMMEDIATE()};
-            LD(a, rMemory(get_16bit(hi,lo)));
+        {
+            unsigned char lo{ GET_IMMEDIATE() };
+            unsigned char hi{ GET_IMMEDIATE() };
+            LD(a, rMemory(get_16bit(hi, lo)));
             return 16;
+        }
         case 0xfb:
             EI();
             return 4;
         case 0xfc:
             // no instr
-            return;
+            return 0;
         case 0xfd:
             // no instr
-            return;
+            return 0;
         case 0xfe:
             CP(a, GET_IMMEDIATE());
             return 8;
@@ -896,6 +904,8 @@ int CPU::performCBOpCode()
 {
     // opcodes stored in program counter
     unsigned char op = rMemory(pc);
+    unsigned char bit{ 0 };
+    unsigned char cycles{ 8 };
     switch(op)
     {
         pc+= 2;
@@ -918,10 +928,12 @@ int CPU::performCBOpCode()
             RLA(l);
             return 8;
         case 0x06:
-            unsigned char temp{rMemory(get_16bit(h,l))};
+        {
+            unsigned char temp{ rMemory(get_16bit(h,l)) };
             RLA(temp);
-            wMemory(get_16bit(h,l), temp);
+            wMemory(get_16bit(h, l), temp);
             return 16;
+        }
         case 0x07:
             RLA(a);
             return 8;
@@ -944,10 +956,12 @@ int CPU::performCBOpCode()
             RRA(l);
             return 8;
         case 0x0e:
-            unsigned char temp{rMemory(get_16bit(h,l))};
+        {
+            unsigned char temp{ rMemory(get_16bit(h,l)) };
             RRA(temp);
-            wMemory(get_16bit(h,l), temp);
+            wMemory(get_16bit(h, l), temp);
             return 16;
+        }
         case 0x0f:
             RRA(a);
             pc++;
@@ -971,10 +985,12 @@ int CPU::performCBOpCode()
             RLA(l, true);
             return 8;
         case 0x16:
-            unsigned char temp{rMemory(get_16bit(h,l))};
+        {
+            unsigned char temp{ rMemory(get_16bit(h,l)) };
             RLA(temp, true);
-            wMemory(get_16bit(h,l), temp);
+            wMemory(get_16bit(h, l), temp);
             return 16;
+        }
         case 0x17:
             RLA(a, true);
             return 8;
@@ -997,10 +1013,12 @@ int CPU::performCBOpCode()
             RRA(l, true);
             return 8;
         case 0x1e:
-            unsigned char temp{rMemory(get_16bit(h,l))};
+        {
+            unsigned char temp{ rMemory(get_16bit(h,l)) };
             RRA(temp, true);
-            wMemory(get_16bit(h,l), temp);
+            wMemory(get_16bit(h, l), temp);
             return 16;
+        }
         case 0x1f:
             RRA(a, true);
             pc++;
@@ -1024,10 +1042,12 @@ int CPU::performCBOpCode()
             SLA(l);
             return 8;
         case 0x26:
-            unsigned char temp{rMemory(get_16bit(h,l))};
+        {
+            unsigned char temp{ rMemory(get_16bit(h,l)) };
             SLA(temp);
-            wMemory(rMemory(get_16bit(h,l)), temp);
+            wMemory(rMemory(get_16bit(h, l)), temp);
             return 16;
+        }
         case 0x27:
             SLA(a);
             return 8;
@@ -1050,10 +1070,12 @@ int CPU::performCBOpCode()
             SRA(l);
             return 8;
         case 0x2e:
-            unsigned char temp{rMemory(get_16bit(h,l))};
+        {
+            unsigned char temp{ rMemory(get_16bit(h,l)) };
             SRA(temp);
-            wMemory(get_16bit(h,l), temp);
+            wMemory(get_16bit(h, l), temp);
             return 16;
+        }
         case 0x2f:
             SRA(a);
             return 8;
@@ -1076,10 +1098,12 @@ int CPU::performCBOpCode()
             SWAP(l);
             return 8;
         case 0x36:
-            unsigned char temp{rMemory(get_16bit(h,l))};
+        {
+            unsigned char temp{ rMemory(get_16bit(h,l)) };
             SWAP(temp);
-            wMemory(get_16bit(h,l), temp);
+            wMemory(get_16bit(h, l), temp);
             return 16;
+        }
         case 0x37:
             SWAP(a);
             return 8;
@@ -1102,10 +1126,12 @@ int CPU::performCBOpCode()
             SRL(l);
             return 8;
         case 0x3e:
-            unsigned char temp{rMemory(get_16bit(h,l))};
+        {
+            unsigned char temp{ rMemory(get_16bit(h,l)) };
             SRL(temp);
-            wMemory(get_16bit(h,l), temp);
+            wMemory(get_16bit(h, l), temp);
             return 16;
+        }
         case 0x3f:
             SRA(a);
             return 8;
@@ -1174,8 +1200,8 @@ int CPU::performCBOpCode()
         case 0x7d:
         case 0x7e:
         case 0x7f:
-            unsigned char bit{0};
-            unsigned char cycles{8};
+            bit = 0;
+            cycles = 8;
 
             for(unsigned char opHi{0x40}; opHi < (op & 0xF0); opHi += 0x10)
             {
@@ -1283,8 +1309,8 @@ int CPU::performCBOpCode()
         case 0xbd:
         case 0xbe:
         case 0xbf:
-            unsigned char bit{0};
-            unsigned char cycles{8};
+            bit = 0;
+            cycles = 8;
 
             for(unsigned char opHi{0x40}; opHi < (op & 0xF0); opHi += 0x10)
             {
@@ -1394,8 +1420,8 @@ int CPU::performCBOpCode()
         case 0xfd:
         case 0xfe:
         case 0xff:
-            unsigned char bit{0};
-            unsigned char cycles{8};
+            bit = 0;
+            cycles = 8;
 
             for(unsigned char opHi{0x40}; opHi < (op & 0xF0); opHi += 0x10)
             {

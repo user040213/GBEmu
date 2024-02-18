@@ -116,7 +116,7 @@ class CPU
         General Purpose functions 
         ****/
         unsigned short get_16bit(unsigned char hi, unsigned char lo) const;
-        unsigned short set_16bit(unsigned short val, unsigned char &hi, unsigned char &lo);
+        void set_16bit(unsigned short val, unsigned char &hi, unsigned char &lo);
         unsigned char get_bit(unsigned char val, unsigned char bit);
         unsigned char get_8bit(unsigned short val, bool hi=false);
         void load_lo(unsigned short &reg, unsigned char data);

@@ -8,8 +8,13 @@ int main()
 
 GBEmu::GBEmu()
 {
-    CPUInstance = CPU();
+    CPUInstance = new CPU();
 
+}
+
+GBEmu::~GBEmu()
+{
+    delete CPUInstance;
 }
 
 void GBEmu::boot()
@@ -23,9 +28,9 @@ void GBEmu::mainLoop()
     while(true)
     {
         
-        cycle = CPUInstance.performOpCode();
-        CPUInstance.doTimer(cycle);
-        CPUInstance.handleInterrupts();
+        cycle = CPUInstance->performOpCode();
+        CPUInstance->doTimer(cycle);
+        CPUInstance->handleInterrupts();
     }
 }
 

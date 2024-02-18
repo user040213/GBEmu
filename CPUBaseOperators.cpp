@@ -21,7 +21,7 @@ void CPU::LDH(unsigned char offset, bool targetA)
 bool CPU::JR(bool conditional, unsigned char condition, bool conditionReq)
 {
     // increment program counter by offset
-    char offset{GET_IMMEDIATE()};
+    char offset{(char)GET_IMMEDIATE()};
     pc += 2;
     if(conditional)
     {
@@ -42,7 +42,7 @@ bool CPU::JR(bool conditional, unsigned char condition, bool conditionReq)
 }
 
 // Little endian so lo byte is first in memory
-bool CPU::JP(unsigned char lo, unsigned char hi, bool conditional=false, unsigned char condition=0, bool conditionReq=false)
+bool CPU::JP(unsigned char lo, unsigned char hi, bool conditional, unsigned char condition, bool conditionReq)
 {
     pc++;
     if(conditional)
@@ -287,7 +287,7 @@ void CPU::RRA(unsigned char &regTarget, bool withCarry)
 
     //LSB becomes carry flag
     // clear carry bit
-    f &= (~(0b1)) << F_C;
+    f &= (~(0b1 << F_C));
     // shift bit 0 into carry bit
     f |= get_bit(init, 0) << F_C;
 }
@@ -592,7 +592,7 @@ void CPU::CP(unsigned char regTarget, unsigned char data)
     }
 }
 
-bool CPU::CALL(bool conditional=false, unsigned char condition=0, bool conditionReq=false)
+bool CPU::CALL(bool conditional, unsigned char condition, bool conditionReq)
 {
     unsigned char lo{GET_IMMEDIATE()};
     unsigned char hi{GET_IMMEDIATE()};
@@ -627,7 +627,7 @@ void CPU::SLA(unsigned char &regTarget)
 {
     f &= ~((0b1) << F_C);
     f |= get_bit(regTarget, 7) << F_C;
-    regTarget << 1;
+    regTarget = regTarget<< 1;
 
     f &= ~((0b1) << F_Z);
     
@@ -649,7 +649,7 @@ void CPU::SRA(unsigned char &regTarget)
     unsigned char initial = regTarget;
     f &= ~((0b1) << F_C);
     f |= get_bit(regTarget, 0) << F_C;
-    regTarget >> 1;
+    regTarget = regTarget >> 1;
     RES(regTarget, 7); // hypothetically unneeded
     regTarget |= get_bit(initial, 7) << 7;
 
@@ -672,7 +672,7 @@ void CPU::SRL(unsigned char &regTarget)
     unsigned char initial = regTarget;
     f &= ~((0b1) << F_C);
     f |= get_bit(regTarget, 0) << F_C;
-    regTarget >> 1;
+    regTarget = regTarget >> 1;
     RES(regTarget, 7); // Hypothetically unneeded
 
     f &= ~((0b1) << F_Z);
@@ -748,7 +748,7 @@ void CPU::BIT(unsigned char regTarget, unsigned char bit)
 
 void CPU::ADDSP()
 {
-    signed char data{GET_IMMEDIATE()};
+    signed char data{(char)GET_IMMEDIATE()};
     unsigned short sp_temp{get_16bit(s,p)};
 
     sp_temp += data;

@@ -7,7 +7,7 @@
 class GBEmu
 {
     private: 
-        CPU CPUInstance;
+        CPU *CPUInstance;
     public:
         GBEmu();
         ~GBEmu();
