@@ -69,7 +69,7 @@ unsigned char CPU::get_bit(unsigned char val, unsigned char bit)
     return (val & (0b1 << bit)) >> bit;
 }
 
-unsigned char get_8bit(unsigned short val, bool hi)
+unsigned char CPU::get_8bit(unsigned short val, bool hi)
 {
     if(hi)
     {

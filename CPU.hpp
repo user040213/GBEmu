@@ -150,7 +150,7 @@ class CPU
         // Merge with call? (Better not to)
         void RST(unsigned short vec);
         void PUSH(unsigned char regHi, unsigned char regLo);
-        void POP(bool AF=false, unsigned char &regHi, unsigned char &regLo);
+        void POP(bool AF, unsigned char &regHi, unsigned char &regLo);
         void DI();
         void CCF();
         void CPL();

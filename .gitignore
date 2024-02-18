@@ -1,2 +1,7 @@
 .vscode/
+.vs/
+*.sln
+*.vcxproj
+*.filters
+*.user
 
